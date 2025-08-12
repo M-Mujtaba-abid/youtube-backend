@@ -9,8 +9,15 @@ dotenv.config({
 })
 
 // console.log(process.env.MONGO_DB)
-app.listen()
 connectDB()
+.then(()=>{
+  app.listen(process.env.PORT || 8000, ()=>{
+    console.log(`server is running on the ${process.env.PORT}`)
+  })
+})
+.catch((error)=>{
+  console.log("me index.js hon main or ye err he ",error)
+})
 
 
 

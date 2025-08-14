@@ -48,8 +48,9 @@ const userSchema = new Schema({
 userSchema.pre("save", async function (next) {
     //pasward chnage krne pr hi change ho 
     if(this.isModified("passward")) return next()
+      
         //pass encrypt kr ne ka code
-    this.passward=bcrypt.hash(this.passward, 10)
+    this.passward= await bcrypt.hash(this.passward, 10)
     next()
 })
   

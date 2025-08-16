@@ -19,6 +19,12 @@ app.use(express.static("public"))
 // app.use(express.cookiparser())
 app.use(cookieParser())
 
+app.post("/signup", (req, res) => {
+  console.log(req.body); // yahan data print hona chahiye
+  res.send("Data received");
+});
+
+
 //  import routes
 import UserRouter from "./routes/user.Route.js"
 

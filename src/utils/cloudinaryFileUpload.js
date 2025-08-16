@@ -1,58 +1,37 @@
-import {v2 as cloudinary} from "cloudinary"
-import fs from "fs"
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
 
- cloudinary.config({ 
-        cloud_name: process.env.CLOUD_NAME , 
-        api_key: process.env.API_KEY , 
-        api_secret:  process.env.API_SECRET  // Click 'View API Keys' above to copy your API secret
-    });
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME?.trim(),
+  api_key: process.env.API_KEY?.trim(),
+  api_secret: process.env.API_SECRET?.trim(),
+});
 
-
+console.log("Cloud Name:", process.env.CLOUD_NAME);
+console.log("API Key:", process.env.API_KEY);
+console.log("API Secret:", process.env.API_SECRET );
 
 const uploadOnCloudinary = async (localFilePath) => {
   try {
     if (!localFilePath) return null;
 
-     // Upload the file on Cloudinary
     const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto"
+      resource_type: "auto",
     });
 
-    console.log("✅ File uploaded on Cloudinary:", response.url);
-
-    // file has been uploaded successfully 
-    console.log("file has been uploaded successfully ",response.url)
-    return response;
-
-    // Local file delete after upload
-    fs.unlinkSync(localFilePath);
-
-    return response;
+    // delete local temp file AFTER successful upload
+       fs.unlinkSync(localFilePath);
+console.log("response ye he cloudinary ka  ======",response)
+    return response; // { url, secure_url, ... }
   } catch (error) {
-    console.error("❌ Cloudinary upload failed:", error.message);
+    console.error("❌ Cloudinary upload failed:", error?.message);
 
-    // Local file delete if exists
-    if (fs.existsSync(localFilePath)) {
+    // cleanup on failure
+    
       fs.unlinkSync(localFilePath);
-    }
-
+    
     return null;
   }
 };
 
 export default uploadOnCloudinary;
-
-
-
-
-    //   // Upload an image
-    //  const uploadResult = await cloudinary.uploader.upload(
-    //        'https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg', {
-    //            public_id: 'shoes',
-    //        }
-    //    )
-    //    .catch((error) => {
-    //        console.log(error);
-    //    });
-    
-    // console.log(uploadResult);

@@ -1,4 +1,6 @@
-import mongoose, { Schema }  from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const userSchema = new Schema({
   userName: {
@@ -36,57 +38,55 @@ const userSchema = new Schema({
       ref: "Video"
     }
   ],
-  password: {
+  password: { // ✅ fixed spelling
     type: String,
     required: [true, "Password is required"]
   },
   refreshToken: {
     type: String
   }
-}, { timestamps: true })
+}, { timestamps: true });
 
+// Pre-save hook for hashing
 userSchema.pre("save", async function (next) {
-    //pasward chnage krne pr hi change ho 
-    if(this.isModified("passward")) return next()
-      
-        //pass encrypt kr ne ka code
-    this.passward= await bcrypt.hash(this.passward, 10)
-    next()
-})
-  
+  if (!this.isModified("password")) return next(); // ✅ fixed spelling
 
+  this.password = await bcrypt.hash(this.password, 10); // ✅ fixed spelling
+  next();
+});
 
-//passward uncrypt kr ke again deikhy ga ke match ho rhahe ke ni 
-userSchema.method.isPasswardCorrect = async function (passward) {
-    return await bcrypt.compare(passward,this.passward)
-}
+// Compare passwords
+userSchema.methods.isPasswordCorrect = async function (password) { // ✅ fixed method name
+  return await bcrypt.compare(password, this.password);
+};
 
-// payload bhaij rha ho token me
-userSchema.methods.generateAccessToken= function(){
- return   jwt.sign({
-        _id:this._id,
-        email: this.email,
-        userName: this.userName,
-        fullName: this.fullName
-    },
-    process.env.ACCES_TOKEN_SECRET,
+// Generate access token
+
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
     {
-       expiresIN: process.env.ACCES_TOKEN_EXPIRY
-    }
-)
-}
-userSchema.methods.generateRefreshToken= function(){
-     return   jwt.sign({
-        _id:this._id,
-        email: this.email,
-        userName: this.userName,
-        fullName: this.fullName
+      _id: this._id,
+      email: this.email,
+      userName: this.userName,
+      fullName: this.fullName
     },
-    process.env.REFRESH_TOKEN_TOKEN,
+    process.env.ACCESS_TOKEN_SECRET, // ✅ fixed spelling of env var
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+  );
+};
+
+// Generate refresh token
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
     {
-       expiresIN: process.env.REFRESH_TOKEN_EXPIRY
-    }
-)
-}
-    
-export const User = mongoose.model("Vedio",userSchema)
+      _id: this._id,
+      email: this.email,
+      userName: this.userName,
+      fullName: this.fullName
+    },
+    process.env.REFRESH_TOKEN_SECRET, // ✅ fixed spelling of env var
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY } // ✅ fixed spelling expiresIn
+  );
+};
+
+export const User = mongoose.model("User", userSchema);

@@ -127,6 +127,19 @@ console.log(`me hon accessToken ${accessToken}, me hon refreshToken ${refreshTok
 
 })
 
+//password reset option 
+const changePassword =(asyncHandler(async(req,res)=>{
+    const {oldPassword, newPassword}= req.body
+    const user= User.findById(req.user?._id)
+    const isPasswordCorrect= await user.isPasswordCorrect(oldPassword)
+    if(!isPasswordCorrect){
+      throw new apiError(400,"invalid password")
+    }
+        user.password=newPassword
+        await user.save({validateBeforeSave:false})
+
+        return res.status(200).json(new apiResponse(200,{},"password changed successfully"))
+ }))
 //user logout
 const logoutUser=(asyncHandler(async(req,res,next)=>{
     User.findByIdAndUpdate(req.user._id,
@@ -146,7 +159,6 @@ const logoutUser=(asyncHandler(async(req,res,next)=>{
 }))
 
 // refreshtoken se again access deny ke liye 
-
 const refreshTokenAccess=(asyncHandler(async(req,res,next)=>{
    try {
      const inComingRefreshToken= req.cookies.refreshToken || req.body.refreshToken
@@ -182,4 +194,61 @@ const refreshTokenAccess=(asyncHandler(async(req,res,next)=>{
    }
 }))
 
-export { registerUser ,loginUser, logoutUser,refreshTokenAccess};
+//get currentUser
+const getCurrentUser=asyncHandler(async(req,res)=>{
+  return res.status(200).json(200,req.user, "current user fetch successfully")
+})
+
+// update Account Details
+const updateAccountDetails=asyncHandler(async(req,res)=>{
+  const {fullName,email } = User.body
+
+  if(!fullName || !email){
+     throw new apiError("fullname and email is required")
+  }
+
+ const userUpdated=  User.findByIdAndUpdate(req.user?._id,
+    {
+      $set: {fullName, email}
+    },
+    {new: true}
+  ).select("-password")
+
+  return res.status(200).json(new apiResponse(200,userUpdated, "account details updated successfully"))
+})
+
+// update avatar file 
+const updateUserAvatar=asyncHandler(async(req,res,next)=>{
+  
+const avatarLocalPath= req.file?.path
+if(!avatarLocalPath){
+  throw new apiError(400,"Avatar  file is missing while in user controller line 225")
+}
+
+ await User.findByIdAndUpdate(req.user?._id,
+  {
+    $set:{ avatar: avatar.url}
+  },
+  {new: true}
+ ).select("-password")
+   
+ return res.status(200).json(new apiResponse(200, avatarLocalPath," avatar file is updates successfully"))
+})
+
+// update user cover image 
+const updateUserCoverImage=asyncHandler(async(req,res)=>{
+  const  coverImageLocalPath=req.file?.path
+
+  if(!coverImageLocalPath){
+    throw new apiError(400, "userImage can't find while updating image user controller line 243")
+  }
+
+  await User.findByIdAndUpdate(req.file?.path,
+    {
+      $set: { coverImage: coverImage.url}
+    },
+    {}
+  ).select("-password")
+  return res.status(200).json(new apiResponse(200,coverImageLocalPath,"cover image updated successfully "))
+})
+export { registerUser ,loginUser, logoutUser,refreshTokenAccess,changePassword,getCurrentUser ,updateAccountDetails, updateUserAvatar, updateUserCoverImage };
